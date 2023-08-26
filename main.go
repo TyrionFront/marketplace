@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"parallel"
 	"time"
 
 	"common"
 	"consequent"
+	"parallel"
 )
 
 func errCheck(e error) {
