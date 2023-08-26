@@ -8,24 +8,33 @@ type Point struct {
 type PointsSet []Point
 
 type Stats struct {
-	Average float64
-	High    float64
-	Low     float64
-	Open    float64
-	Close   float64
+	Timestamp uint64  `json:"timestamp" required:"true"`
+	Average   float64 `json:"average" required:"true"`
+	High      float64 `json:"high" required:"true"`
+	Low       float64 `json:"low" required:"true"`
+	Open      float64 `json:"open" required:"true"`
+	Close     float64 `json:"close" required:"true"`
 }
 
 type StatsSet []Stats
+
+type ResultsByTime struct {
+	Mins5  []Stats `json:"mins5" required:"true"`
+	Mins30 []Stats `json:"mins30" required:"true"`
+	Hrs4   []Stats `json:"hrs4" required:"true"`
+	Hrs24  []Stats `json:"hrs24" required:"true"`
+}
 
 func (ds PointsSet) CalcPoints() (stats Stats) {
 	var total float64
 
 	stats = Stats{
-		Average: 0,
-		Open:    ds[len(ds)-1].Rate,
-		Close:   ds[0].Rate,
-		High:    ds[0].Rate,
-		Low:     ds[0].Rate,
+		Timestamp: ds[len(ds)-1].Timestamp,
+		Average:   0,
+		Open:      ds[len(ds)-1].Rate,
+		Close:     ds[0].Rate,
+		High:      ds[0].Rate,
+		Low:       ds[0].Rate,
 	}
 	for _, v := range ds {
 		total += v.Rate
@@ -51,11 +60,12 @@ func (ds StatsSet) CalcStats() (stats Stats) {
 	var total float64
 
 	stats = Stats{
-		Average: 0,
-		High:    ds[0].High,
-		Low:     ds[0].Low,
-		Open:    ds[len(ds)-1].Open,
-		Close:   ds[0].Close,
+		Timestamp: ds[len(ds)-1].Timestamp,
+		Average:   0,
+		High:      ds[0].High,
+		Low:       ds[0].Low,
+		Open:      ds[len(ds)-1].Open,
+		Close:     ds[0].Close,
 	}
 	for _, v := range ds {
 		total += v.Average

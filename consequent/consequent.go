@@ -6,7 +6,7 @@ import (
 	"common"
 )
 
-func Consequent(ds common.PointsSet) {
+func Consequent(ds common.PointsSet) common.ResultsByTime {
 	const mins5inMins30hrs4inHrs24 = 6
 	const mins30inHrs4 = 8
 
@@ -61,5 +61,12 @@ func Consequent(ds common.PointsSet) {
 
 	for _, v := range hrs24statsRange[:] {
 		fmt.Printf("Avg: %v; High: %v; Low: %v; Open: %v; Close: %v\n", v.Average, v.High, v.Low, v.Open, v.Close)
+	}
+
+	return common.ResultsByTime{
+		Mins5:  mins5statsRange,
+		Mins30: min30statsRange,
+		Hrs4:   hrs4statsRange,
+		Hrs24:  hrs24statsRange,
 	}
 }

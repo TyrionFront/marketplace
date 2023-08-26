@@ -32,10 +32,19 @@ func main() {
 	fmt.Printf("ds size: %v\n\n", len(ds))
 
 	startC := time.Now()
-	consequent.Consequent(ds)
+	consequentRes := consequent.Consequent(ds)
+
 	log.Printf("Consequent calculations took: %v\n\n", time.Since(startC))
 
+	consequentOut, err3 := json.Marshal(consequentRes)
+	errCheck(err3)
+	os.WriteFile("./output/consequentOut.json", consequentOut, 0644)
+
 	startP := time.Now()
-	parallel.Parallel(ds)
+	parallelRes := parallel.Parallel(ds)
 	log.Printf("Parallel calculations took: %v\n\n", time.Since(startP))
+
+	parallelOut, err3 := json.Marshal(parallelRes)
+	errCheck(err3)
+	os.WriteFile("./output/parallelOut.json", parallelOut, 0644)
 }
