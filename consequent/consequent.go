@@ -26,13 +26,12 @@ func Consequent(ds common.PointsSet) common.ResultsByTime {
 	count24hrsStats := 0
 
 	for i := mins5pointsCount; i <= len(ds); i += mins5pointsCount {
-		if i%mins5pointsCount == 0 {
-			pointsToCalc := ds[i-mins5pointsCount : i]
-			current5minsStats := pointsToCalc.CalcPoints()
+		pointsToCalc := ds[i-mins5pointsCount : i]
+		current5minsStats := pointsToCalc.CalcPoints()
 
-			mins5statsRange[count5minsStats] = current5minsStats
-			count5minsStats += 1
-		}
+		mins5statsRange[count5minsStats] = current5minsStats
+		count5minsStats += 1
+
 		if i%mins30pointsCount == 0 {
 			start := count5minsStats - mins5inMins30hrs4inHrs24
 			var statsToCalc common.StatsSet = mins5statsRange[start:count5minsStats]
