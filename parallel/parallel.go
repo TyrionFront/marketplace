@@ -14,14 +14,14 @@ func stastLoopCalc(step int, prevLvlStats, currentLvlStats []common.Stats) {
 	for i := step; i <= len(prevLvlStats); i += step {
 		wg.Add(1)
 
-		go func(lowerStatsIdx, higherStatsIdx int) {
+		go func(lowerLvlStatsIdx, higherLvlStatsIdx int) {
 			defer wg.Done()
 
-			start := lowerStatsIdx - step
-			var statsToCalc common.StatsSet = prevLvlStats[start:lowerStatsIdx]
+			start := lowerLvlStatsIdx - step
+			var statsToCalc common.StatsSet = prevLvlStats[start:lowerLvlStatsIdx]
 
-			current30minsStats := statsToCalc.CalcStats()
-			currentLvlStats[higherStatsIdx] = current30minsStats
+			currentStats := statsToCalc.CalcStats()
+			currentLvlStats[higherLvlStatsIdx] = currentStats
 		}(i, curentStatsCount)
 
 		curentStatsCount += 1
