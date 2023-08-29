@@ -82,3 +82,12 @@ func (ds StatsSet) CalcStats() (stats Stats) {
 
 	return
 }
+
+func CalcSize(dataSize, partSize, loopStep int) (int, int) {
+	setsRangeSize := dataSize / partSize
+
+	if dataSize%partSize == 0 {
+		return setsRangeSize, 0
+	}
+	return setsRangeSize + 1, loopStep
+}
