@@ -1,5 +1,7 @@
 package common
 
+import "models"
+
 type Point struct {
 	Rate      float64
 	Timestamp uint64
@@ -7,28 +9,26 @@ type Point struct {
 
 type PointsSet []Point
 
-type Stats struct {
-	Timestamp uint64  `json:"timestamp" required:"true"`
-	Average   float64 `json:"average" required:"true"`
-	High      float64 `json:"high" required:"true"`
-	Low       float64 `json:"low" required:"true"`
-	Open      float64 `json:"open" required:"true"`
-	Close     float64 `json:"close" required:"true"`
+type StatsSet []models.Stats
+
+func ErrCheck(e error) {
+	if e != nil {
+		panic(e)
+	}
 }
 
-type StatsSet []Stats
+const ByteChunkSize = 16
+const Mins5inMins30hrs4inHrs24 = 6
+const Mins30inHrs4 = 8
+const Mins5pointsCount = 5 * 60 * 100
+const Mins30pointsCount = Mins5pointsCount * Mins5inMins30hrs4inHrs24
+const Hrs4pointsCount = Mins30pointsCount * Mins30inHrs4
+const Hrs24pointsCount = Hrs4pointsCount * Mins5inMins30hrs4inHrs24
 
-type ResultsByTime struct {
-	Mins5  []Stats `json:"mins5" required:"true"`
-	Mins30 []Stats `json:"mins30" required:"true"`
-	Hrs4   []Stats `json:"hrs4" required:"true"`
-	Hrs24  []Stats `json:"hrs24" required:"true"`
-}
-
-func (ds PointsSet) CalcPoints() (stats Stats) {
+func (ds PointsSet) CalcPoints() (stats models.Stats) {
 	var total float64
 
-	stats = Stats{
+	stats = models.Stats{
 		Timestamp: ds[len(ds)-1].Timestamp,
 		Average:   0,
 		Open:      ds[len(ds)-1].Rate,
@@ -56,10 +56,10 @@ func (ds PointsSet) CalcPoints() (stats Stats) {
 	return
 }
 
-func (ds StatsSet) CalcStats() (stats Stats) {
+func (ds StatsSet) CalcStats() (stats models.Stats) {
 	var total float64
 
-	stats = Stats{
+	stats = models.Stats{
 		Timestamp: ds[len(ds)-1].Timestamp,
 		Average:   0,
 		High:      ds[0].High,
