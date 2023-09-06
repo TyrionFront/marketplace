@@ -2,7 +2,11 @@ go 1.21.0
 
 use (
 	.
-	./consequent
-	./parallel
 	./common
+	./config
+	./controllers
+	./models
+	./calculations
+	./repositories
+	./services
 )
