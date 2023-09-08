@@ -12,16 +12,34 @@ import (
 )
 
 type StatsController struct {
-	statsService services.StatsService
+	statsService *services.StatsService
+	usersService *services.UsersService
 }
 
-func NewStatsController(statsService *services.StatsService) *StatsController {
+func NewStatsController(statsService *services.StatsService, usersService *services.UsersService) *StatsController {
 	return &StatsController{
-		statsService: *statsService,
+		statsService: statsService,
+		usersService: usersService,
 	}
 }
 
 func (sc StatsController) SaveStats(ctx *gin.Context) {
+	accessToken := ctx.Request.Header.Get("Token")
+	expectedRoles := []string{common.ROLE_ADMIN, common.ROLE_USER}
+
+	userId, isAuth, authErr := sc.usersService.AuthorizeUser(accessToken, expectedRoles)
+	if authErr != nil {
+		ctx.JSON(authErr.Status, authErr)
+		return
+	}
+	if !isAuth {
+		ctx.Status(http.StatusUnauthorized)
+		return
+	}
+	if userId == 0 {
+		ctx.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
 	reqBody, err := io.ReadAll(ctx.Request.Body)
 
 	if err != nil {
@@ -37,7 +55,7 @@ func (sc StatsController) SaveStats(ctx *gin.Context) {
 		return
 	}
 
-	res, resError := sc.statsService.SaveStats(points)
+	res, resError := sc.statsService.SaveStats(points, userId)
 	if resError != nil {
 		ctx.AbortWithStatusJSON(resError.Status, resError)
 		return

@@ -176,7 +176,7 @@ func processData(points []common.Point) *[]models.Stats {
 	return &calculatedStats
 }
 
-func (ss StatsService) SaveStats(points []common.Point) (*[]models.StoredStatsDB, *models.ResponseError) {
+func (ss StatsService) SaveStats(points []common.Point, user int) (*[]models.StoredStatsDB, *models.ResponseError) {
 	stats := processData(points)
 
 	validationErr := ValidateStatsInput(stats)
@@ -184,7 +184,7 @@ func (ss StatsService) SaveStats(points []common.Point) (*[]models.StoredStatsDB
 		return nil, validationErr
 	}
 
-	return ss.statsRepository.SaveStats(stats)
+	return ss.statsRepository.SaveStats(stats, user)
 }
 
 func (ss StatsService) UpdateStatsRecord(dataToUpdate *models.Stats, recordId int) *models.ResponseError {
