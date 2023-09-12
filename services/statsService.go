@@ -217,3 +217,11 @@ func (ss StatsService) GetStatsByCreatedAt(creationTimestamp string) (*[]models.
 	}
 	return statsItems, nil
 }
+
+func (ss StatsService) GetStatsByUser(userId int) (*[]models.StoredStatsDB, *models.ResponseError) {
+	statsItems, err := ss.statsRepository.GetStatsByUser(userId)
+	if err != nil {
+		return nil, err
+	}
+	return statsItems, nil
+}

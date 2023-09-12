@@ -218,3 +218,22 @@ func (sr StatsRepository) GetStatsByCreatedAt(creationTimestamp string) (*[]mode
 	defer rows.Close()
 	return mapResults(rows)
 }
+
+func (sr StatsRepository) GetStatsByUser(userId int) (*[]models.StoredStatsDB, *models.ResponseError) {
+	query := `
+		SELECT *
+		FROM calculated_stats
+		WHERE related_user = $1
+	`
+
+	rows, err := sr.dbHandler.Query(query, userId)
+
+	if err != nil {
+		return nil, &models.ResponseError{
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		}
+	}
+	defer rows.Close()
+	return mapResults(rows)
+}

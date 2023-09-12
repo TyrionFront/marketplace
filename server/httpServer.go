@@ -29,6 +29,8 @@ func InitHttpServer(config *viper.Viper, dbHandler *sql.DB) HttpServer {
 
 	router := gin.Default()
 	router.POST("/points", statsController.SaveStats)
+	router.GET("/points/:userId", statsController.PrepareStatsByUser)
+
 	router.POST("/new-user", usersController.AddUser)
 	router.POST("/login", usersController.Login)
 	router.POST("/logout", usersController.Logout)

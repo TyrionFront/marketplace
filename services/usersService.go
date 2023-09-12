@@ -63,11 +63,14 @@ func (us UsersService) AddUser(params NewUserParams) *models.ResponseError {
 		if err != nil {
 			return err
 		}
+		return nil
 	}
-	_, isAuthorized, err := us.AuthorizeUser(accessToken, []string{role})
+
+	_, isAuthorized, _, err := us.AuthorizeUser(accessToken, []string{role})
 	if err != nil {
 		return err
 	}
+
 	if !isAuthorized {
 		return &models.ResponseError{
 			Message: "Invalid access token",
@@ -114,28 +117,28 @@ func (us UsersService) Logout(accessToken string) *models.ResponseError {
 	return us.usersRepository.RemoveAccessToken(accessToken)
 }
 
-func (us UsersService) AuthorizeUser(accessToken string, expectedRoles []string) (int, bool, *models.ResponseError) {
+func (us UsersService) AuthorizeUser(accessToken string, expectedRoles []string) (int, bool, string, *models.ResponseError) {
 	if accessToken == "" {
-		return 0, false, &models.ResponseError{
+		return 0, false, "", &models.ResponseError{
 			Message: "Invalid access token",
 			Status:  http.StatusBadRequest,
 		}
 	}
 	id, role, err := us.usersRepository.GetUser(accessToken)
 	if err != nil {
-		return 0, false, err
+		return 0, false, "", err
 	}
 	if role == "" {
-		return 0, false, &models.ResponseError{
+		return 0, false, "", &models.ResponseError{
 			Message: "Failed to authorize user",
 			Status:  http.StatusUnauthorized,
 		}
 	}
 	for _, expected := range expectedRoles {
 		if expected == role {
-			return id, true, nil
+			return id, true, role, nil
 		}
 	}
 
-	return id, false, nil
+	return id, false, role, nil
 }
