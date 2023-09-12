@@ -104,6 +104,13 @@ func (ur UsersRepository) GetUser(accessToken string) (int, string, *models.Resp
 		}
 	}
 
+	if id == 0 || expiresAt == "" {
+		return 0, "", &models.ResponseError{
+			Message: "Invalid access token",
+			Status:  http.StatusBadRequest,
+		}
+	}
+
 	parsedTimePassed, err := time.Parse(time.RFC3339, expiresAt)
 	if err != nil {
 		return 0, "", &models.ResponseError{

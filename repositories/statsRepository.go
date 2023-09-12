@@ -97,7 +97,10 @@ func (sr StatsRepository) SaveStats(stats *[]models.Stats, user int) (*[]models.
 			s.Low, s.Open, s.Close, s.TimeFrame, currentTimeStamp, currentTimeStamp, user,
 		)
 	}
-	query += ` RETURNING *`
+	query += `
+		ON CONFLICT DO NOTHING
+		RETURNING *
+	`
 
 	rows, err := sr.dbHandler.Query(
 		query, queryParams...,

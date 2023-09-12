@@ -60,5 +60,9 @@ func (sc StatsController) SaveStats(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(resError.Status, resError)
 		return
 	}
+	if len(*res) == 0 {
+		ctx.JSON(http.StatusOK, "No new data has been saved")
+		return
+	}
 	ctx.JSON(http.StatusCreated, res)
 }
