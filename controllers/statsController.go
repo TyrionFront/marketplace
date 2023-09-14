@@ -49,11 +49,26 @@ func (sc StatsController) SaveStats(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
+	if len(reqBody) == 0 {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.ResponseError{
+			Message: "Request body can't be empty.",
+			Status:  http.StatusBadRequest,
+		})
+		return
+	}
 	var points []common.Point
 	err = json.Unmarshal(reqBody, &points)
 	if err != nil {
 		log.Println("Error while unmarshaling request body", err)
 		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(points) == 0 {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.ResponseError{
+			Message: "No new data for recalculation.",
+			Status:  http.StatusBadRequest,
+		})
 		return
 	}
 
