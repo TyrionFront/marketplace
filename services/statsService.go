@@ -98,7 +98,7 @@ func processData(points []common.Point) *[]models.Stats {
 	// 	common.ErrCheck(wbErr)
 	// }
 
-	binContent, err := os.Open("../Archive/data.bin")
+	binContent, err := os.Open("./storage/data.bin")
 	common.ErrCheck(err)
 	defer binContent.Close()
 
