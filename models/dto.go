@@ -7,6 +7,11 @@ type ResultsByTime struct {
 	Hrs24  []Stats `json:"hrs24" required:"true"`
 }
 
+type StatsByUser struct {
+	Size int              `json:"size" required:"true"`
+	Data *[]StoredStatsDB `json:"data" required:"true"`
+}
+
 type ResponseError struct {
 	Message string `json:"message"`
 	Status  int    `json:"-"`

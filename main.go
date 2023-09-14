@@ -2,17 +2,29 @@ package main
 
 import (
 	"config"
+	"fmt"
 	"log"
 	"marketplace/server"
+	"os"
 
 	_ "github.com/lib/pq"
 )
+
+func getConfigFileName() string {
+	env := os.Getenv("ENV")
+	if env != "" {
+		return "appConfig-" + env
+	}
+	return "appConfig"
+}
 
 func main() {
 	log.Println("Starting marketplace app...")
 	log.Println("Initializing configuration")
 
-	config := config.InitConfig("appConfig")
+	configName := getConfigFileName()
+	fmt.Println(configName)
+	config := config.InitConfig(configName)
 	log.Println("Initializing DB")
 	dbHandler := server.InitDatabase(config)
 

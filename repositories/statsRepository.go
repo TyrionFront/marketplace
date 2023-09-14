@@ -22,7 +22,7 @@ func NewStatsRepository(dbHandler *sql.DB) *StatsRepository {
 
 func mapResults(rows *sql.Rows) (*[]models.StoredStatsDB, *models.ResponseError) {
 	var StoredStatsDB []models.StoredStatsDB
-	var id int
+	var id, user int
 	var createdAt, updatedAt, timeFrame, timestampDB string
 	var average, high, low, open, close float64
 
@@ -30,7 +30,7 @@ func mapResults(rows *sql.Rows) (*[]models.StoredStatsDB, *models.ResponseError)
 	for rows.Next() {
 		err = rows.Scan(
 			&id, &createdAt, &updatedAt, &timestampDB,
-			&average, &high, &low, &open, &close, &timeFrame,
+			&average, &high, &low, &open, &close, &timeFrame, &user,
 		)
 		if err != nil {
 			return nil, &models.ResponseError{
@@ -40,16 +40,17 @@ func mapResults(rows *sql.Rows) (*[]models.StoredStatsDB, *models.ResponseError)
 		}
 
 		statsRecord := models.StoredStatsDB{
-			Id:        id,
-			CreatedAt: createdAt,
-			UpdatedAt: updatedAt,
-			Timestamp: timestampDB,
-			TimeFrame: timeFrame,
-			Average:   average,
-			High:      high,
-			Low:       low,
-			Open:      open,
-			Close:     close,
+			Id:          id,
+			CreatedAt:   createdAt,
+			UpdatedAt:   updatedAt,
+			Timestamp:   timestampDB,
+			TimeFrame:   timeFrame,
+			Average:     average,
+			High:        high,
+			Low:         low,
+			Open:        open,
+			Close:       close,
+			RelatedUser: user,
 		}
 		StoredStatsDB = append(StoredStatsDB, statsRecord)
 	}
@@ -63,9 +64,9 @@ func mapResults(rows *sql.Rows) (*[]models.StoredStatsDB, *models.ResponseError)
 	return &StoredStatsDB, nil
 }
 
-func (sr StatsRepository) SaveStats(stats *[]models.Stats) (*[]models.StoredStatsDB, *models.ResponseError) {
+func (sr StatsRepository) SaveStats(stats *[]models.Stats, user int) (*[]models.StoredStatsDB, *models.ResponseError) {
 	query := `
-		INSERT INTO calculated_stats(timestamp, average, high, low, open, close, time_frame, created_at, updated_at)
+		INSERT INTO calculated_stats(timestamp, average, high, low, open, close, time_frame, created_at, updated_at, related_user)
 		VALUES 
 	`
 	queryParams := []interface{}{}
@@ -74,10 +75,10 @@ func (sr StatsRepository) SaveStats(stats *[]models.Stats) (*[]models.StoredStat
 		fieldsCount := reflect.ValueOf(s).NumField()
 
 		query += `(`
-		for j := 0; j < fieldsCount+2; j += 1 {
+		for j := 0; j < fieldsCount+3; j += 1 {
 			totalCount += 1
 			var paramsSetEnd string
-			if j < fieldsCount+1 {
+			if j < fieldsCount+2 {
 				paramsSetEnd = `, `
 			}
 			query += `$` + fmt.Sprint(totalCount, paramsSetEnd)
@@ -93,10 +94,13 @@ func (sr StatsRepository) SaveStats(stats *[]models.Stats) (*[]models.StoredStat
 		currentTimeStamp := time.Now().Format(time.RFC3339)
 		queryParams = append(
 			queryParams, formattedTimestamp, s.Average, s.High,
-			s.Low, s.Open, s.Close, s.TimeFrame, currentTimeStamp, currentTimeStamp,
+			s.Low, s.Open, s.Close, s.TimeFrame, currentTimeStamp, currentTimeStamp, user,
 		)
 	}
-	query += ` RETURNING *`
+	query += `
+		ON CONFLICT DO NOTHING
+		RETURNING *
+	`
 
 	rows, err := sr.dbHandler.Query(
 		query, queryParams...,
@@ -204,6 +208,25 @@ func (sr StatsRepository) GetStatsByCreatedAt(creationTimestamp string) (*[]mode
 	`
 
 	rows, err := sr.dbHandler.Query(query, creationTimestamp)
+
+	if err != nil {
+		return nil, &models.ResponseError{
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		}
+	}
+	defer rows.Close()
+	return mapResults(rows)
+}
+
+func (sr StatsRepository) GetStatsByUser(userId int) (*[]models.StoredStatsDB, *models.ResponseError) {
+	query := `
+		SELECT *
+		FROM calculated_stats
+		WHERE related_user = $1
+	`
+
+	rows, err := sr.dbHandler.Query(query, userId)
 
 	if err != nil {
 		return nil, &models.ResponseError{

@@ -98,7 +98,7 @@ func processData(points []common.Point) *[]models.Stats {
 	// 	common.ErrCheck(wbErr)
 	// }
 
-	binContent, err := os.Open("../Archive/data.bin")
+	binContent, err := os.Open("./storage/data.bin")
 	common.ErrCheck(err)
 	defer binContent.Close()
 
@@ -176,7 +176,7 @@ func processData(points []common.Point) *[]models.Stats {
 	return &calculatedStats
 }
 
-func (ss StatsService) SaveStats(points []common.Point) (*[]models.StoredStatsDB, *models.ResponseError) {
+func (ss StatsService) SaveStats(points []common.Point, user int) (*[]models.StoredStatsDB, *models.ResponseError) {
 	stats := processData(points)
 
 	validationErr := ValidateStatsInput(stats)
@@ -184,7 +184,7 @@ func (ss StatsService) SaveStats(points []common.Point) (*[]models.StoredStatsDB
 		return nil, validationErr
 	}
 
-	return ss.statsRepository.SaveStats(stats)
+	return ss.statsRepository.SaveStats(stats, user)
 }
 
 func (ss StatsService) UpdateStatsRecord(dataToUpdate *models.Stats, recordId int) *models.ResponseError {
@@ -212,6 +212,14 @@ func (ss StatsService) GetStatsRecord(statsId int) (*models.StoredStatsDB, *mode
 
 func (ss StatsService) GetStatsByCreatedAt(creationTimestamp string) (*[]models.StoredStatsDB, *models.ResponseError) {
 	statsItems, err := ss.statsRepository.GetStatsByCreatedAt(creationTimestamp)
+	if err != nil {
+		return nil, err
+	}
+	return statsItems, nil
+}
+
+func (ss StatsService) GetStatsByUser(userId int) (*[]models.StoredStatsDB, *models.ResponseError) {
+	statsItems, err := ss.statsRepository.GetStatsByUser(userId)
 	if err != nil {
 		return nil, err
 	}

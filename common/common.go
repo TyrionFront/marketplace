@@ -17,6 +17,9 @@ func ErrCheck(e error) {
 	}
 }
 
+const ROLE_ADMIN = "admin"
+const ROLE_USER = "user"
+
 const ByteChunkSize = 16
 const Mins5inMins30hrs4inHrs24 = 6
 const Mins30inHrs4 = 8
