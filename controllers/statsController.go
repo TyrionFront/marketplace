@@ -108,7 +108,7 @@ func (sc StatsController) PrepareStatsByUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, "No data has been found for the current user")
 		return
 	}
-	ctx.JSON(http.StatusCreated, models.StatsByUser{
+	ctx.JSON(http.StatusOK, models.StatsByUser{
 		Size: len(*res),
 		Data: res,
 	})

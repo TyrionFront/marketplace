@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: marketplace-app
+spec:
+    selector:
+        matchLabels:
+            app: marketplace-app
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: marketplace-app
+        spec:
+            containers:
+                - image: marketplace-app:latest
+                  name: marketplace-app
+                  imagePullPolicy: Never
+                  ports:
+                      - containerPort: 8080
+                  env:
+                      - name: ENV
+                        value: k8s

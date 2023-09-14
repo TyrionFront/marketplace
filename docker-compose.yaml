@@ -1,0 +1,7 @@
+version: '3.7'
+
+services:
+    marketplace-app:
+        image: marketplace-app:latest
+        ports:
+            - 8080:8080

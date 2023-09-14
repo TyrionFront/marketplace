@@ -9,7 +9,7 @@ import (
 func InitConfig(fileName string) *viper.Viper {
 	config := viper.New()
 	config.SetConfigName(fileName)
-	config.AddConfigPath(".")
+	config.AddConfigPath("./config")
 	config.AddConfigPath("$HOME")
 
 	err := config.ReadInConfig()
