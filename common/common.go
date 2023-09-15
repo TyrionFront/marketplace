@@ -1,6 +1,9 @@
 package common
 
-import "models"
+import (
+	"models"
+	"time"
+)
 
 type Point struct {
 	Rate      float64
@@ -27,6 +30,13 @@ const Mins5pointsCount = 5 * 60 * 100
 const Mins30pointsCount = Mins5pointsCount * Mins5inMins30hrs4inHrs24
 const Hrs4pointsCount = Mins30pointsCount * Mins30inHrs4
 const Hrs24pointsCount = Hrs4pointsCount * Mins5inMins30hrs4inHrs24
+
+func FormatTimestamp(numericTst uint64) string {
+	t := time.Unix(int64(numericTst/1000), 0).UTC()
+	formattedTimestamp := t.Format(time.RFC3339)
+
+	return formattedTimestamp
+}
 
 func (ds PointsSet) CalcPoints() (stats models.Stats) {
 	var total float64

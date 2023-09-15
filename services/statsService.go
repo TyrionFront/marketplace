@@ -75,31 +75,39 @@ func validateTimeFields(stats *models.Stats) *models.ResponseError {
 	return nil
 }
 
-func processData(points []common.Point) *[]models.Stats {
+func jsonToBin() {
+	content, err := os.Open("../Archive/data.json")
+	common.ErrCheck(err)
+	defer content.Close()
+
+	var ds common.PointsSet
+	err2 := json.NewDecoder(content).Decode(&ds)
+	common.ErrCheck(err2)
+
+	binStorage, err3 := os.Create("../Archive/data.bin")
+	common.ErrCheck(err3)
+	defer binStorage.Close()
+
+	for _, p := range ds {
+		b := make([]byte, 16)
+		binary.LittleEndian.PutUint64(b[:8], p.Timestamp)
+		binary.LittleEndian.PutUint64(b[8:16], math.Float64bits(p.Rate))
+
+		_, wbErr := binStorage.Write(b)
+		common.ErrCheck(wbErr)
+	}
+}
+
+func prepareInitialPoints() (*common.PointsSet, *models.ResponseError) {
 	fStart := time.Now()
-	// content, err := os.Open("../Archive/data.json")
-	// common.ErrCheck(err)
-	// defer content.Close()
-
-	// var ds common.PointsSet
-	// err2 := json.NewDecoder(content).Decode(&ds)
-	// common.ErrCheck(err2)
-
-	// binStorage, err3 := os.Create("../Archive/data.bin")
-	// common.ErrCheck(err3)
-	// defer binStorage.Close()
-
-	// for _, p := range ds {
-	// 	b := make([]byte, 16)
-	// 	binary.LittleEndian.PutUint64(b[:8], p.Timestamp)
-	// 	binary.LittleEndian.PutUint64(b[8:16], math.Float64bits(p.Rate))
-
-	// 	_, wbErr := binStorage.Write(b)
-	// 	common.ErrCheck(wbErr)
-	// }
 
 	binContent, err := os.Open("./storage/data.bin")
-	common.ErrCheck(err)
+	if err != nil {
+		return nil, &models.ResponseError{
+			Message: err.Error(),
+			Status:  http.StatusInternalServerError,
+		}
+	}
 	defer binContent.Close()
 
 	bytes, readErr := io.ReadAll(binContent)
@@ -139,10 +147,15 @@ func processData(points []common.Point) *[]models.Stats {
 	log.Printf("Reading + decoding took: %v", time.Since(fStart))
 	fmt.Printf("ds size: %v\n\n", len(dsFromBin))
 
+	return &dsFromBin, nil
+}
+
+func processData(points []common.Point, initialPoints *common.PointsSet) *[]models.Stats {
 	startS := time.Now()
 	newPoints := points
-	remainedDs := dsFromBin[:len(dsFromBin)-len(points)]
+	remainedDs := (*initialPoints)[:len(*initialPoints)-len(points)]
 	newPoints = append(newPoints, remainedDs...)
+
 	log.Printf("Data set updating took: %v\n\n", time.Since(startS))
 
 	startP := time.Now()
@@ -176,8 +189,30 @@ func processData(points []common.Point) *[]models.Stats {
 	return &calculatedStats
 }
 
+func checkPoints(points []common.Point, controlTimestamp uint64) *models.ResponseError {
+	for _, item := range points {
+		if item.Timestamp <= controlTimestamp {
+			return &models.ResponseError{
+				Message: fmt.Sprintf("Data point has already been processed. Timestamp: %v", item.Timestamp),
+				Status:  http.StatusBadRequest,
+			}
+		}
+	}
+	return nil
+}
+
 func (ss StatsService) SaveStats(points []common.Point, user int) (*[]models.StoredStatsDB, *models.ResponseError) {
-	stats := processData(points)
+	initialPoints, err := prepareInitialPoints()
+	if err != nil {
+		return nil, err
+	}
+
+	checkErr := checkPoints(points, (*initialPoints)[0].Timestamp)
+	if checkErr != nil {
+		return nil, checkErr
+	}
+
+	stats := processData(points, initialPoints)
 
 	validationErr := ValidateStatsInput(stats)
 	if validationErr != nil {
@@ -218,8 +253,8 @@ func (ss StatsService) GetStatsByCreatedAt(creationTimestamp string) (*[]models.
 	return statsItems, nil
 }
 
-func (ss StatsService) GetStatsByUser(userId int) (*[]models.StoredStatsDB, *models.ResponseError) {
-	statsItems, err := ss.statsRepository.GetStatsByUser(userId)
+func (ss StatsService) GetAllStatsByUser(userId int) (*[]models.StoredStatsDB, *models.ResponseError) {
+	statsItems, err := ss.statsRepository.GetAllStatsByUser(userId)
 	if err != nil {
 		return nil, err
 	}

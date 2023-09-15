@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"common"
 	"database/sql"
 	"fmt"
 	"models"
@@ -21,7 +22,7 @@ func NewStatsRepository(dbHandler *sql.DB) *StatsRepository {
 }
 
 func mapResults(rows *sql.Rows) (*[]models.StoredStatsDB, *models.ResponseError) {
-	var StoredStatsDB []models.StoredStatsDB
+	var storedStatsDB []models.StoredStatsDB
 	var id, user int
 	var createdAt, updatedAt, timeFrame, timestampDB string
 	var average, high, low, open, close float64
@@ -52,16 +53,16 @@ func mapResults(rows *sql.Rows) (*[]models.StoredStatsDB, *models.ResponseError)
 			Close:       close,
 			RelatedUser: user,
 		}
-		StoredStatsDB = append(StoredStatsDB, statsRecord)
+		storedStatsDB = append(storedStatsDB, statsRecord)
 	}
-	if rows.Err() != nil {
+	if err = rows.Err(); err != nil {
 		return nil, &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
 	}
 
-	return &StoredStatsDB, nil
+	return &storedStatsDB, nil
 }
 
 func (sr StatsRepository) SaveStats(stats *[]models.Stats, user int) (*[]models.StoredStatsDB, *models.ResponseError) {
@@ -89,8 +90,7 @@ func (sr StatsRepository) SaveStats(stats *[]models.Stats, user int) (*[]models.
 		}
 		query += paramsPartEnd
 
-		t := time.Unix(int64(s.Timestamp/1000), 0).UTC()
-		formattedTimestamp := t.Format(time.RFC3339)
+		formattedTimestamp := common.FormatTimestamp(s.Timestamp)
 		currentTimeStamp := time.Now().Format(time.RFC3339)
 		queryParams = append(
 			queryParams, formattedTimestamp, s.Average, s.High,
@@ -98,7 +98,6 @@ func (sr StatsRepository) SaveStats(stats *[]models.Stats, user int) (*[]models.
 		)
 	}
 	query += `
-		ON CONFLICT DO NOTHING
 		RETURNING *
 	`
 
@@ -179,7 +178,7 @@ func (sr StatsRepository) GetStatsOne(statsId int) (*models.StoredStatsDB, *mode
 			}
 		}
 	}
-	if rows.Err() != nil {
+	if err = rows.Err(); err != nil {
 		return nil, &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
@@ -219,7 +218,7 @@ func (sr StatsRepository) GetStatsByCreatedAt(creationTimestamp string) (*[]mode
 	return mapResults(rows)
 }
 
-func (sr StatsRepository) GetStatsByUser(userId int) (*[]models.StoredStatsDB, *models.ResponseError) {
+func (sr StatsRepository) GetAllStatsByUser(userId int) (*[]models.StoredStatsDB, *models.ResponseError) {
 	query := `
 		SELECT *
 		FROM calculated_stats

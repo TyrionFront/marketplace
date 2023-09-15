@@ -113,7 +113,7 @@ func (sc StatsController) PrepareStatsByUser(ctx *gin.Context) {
 		return
 	}
 
-	res, resError := sc.statsService.GetStatsByUser(userId)
+	res, resError := sc.statsService.GetAllStatsByUser(userId)
 	if resError != nil {
 		ctx.AbortWithStatusJSON(resError.Status, resError)
 		return
