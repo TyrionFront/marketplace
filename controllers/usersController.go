@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"services"
+	"utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,7 +37,15 @@ func (uc UsersController) AddUser(ctx *gin.Context) {
 		return
 	}
 
-	accessToken := ctx.Request.Header.Get("Token")
+	var accessToken string
+	if newUserParams.Role == "admin" {
+		token, extrErr := utils.ExtractToken(ctx)
+		if extrErr != nil {
+			ctx.JSON(extrErr.Status, extrErr)
+			return
+		}
+		accessToken = token
+	}
 	newUserParams.AccessToken = accessToken
 
 	addingErr := uc.usersService.AddUser(newUserParams)

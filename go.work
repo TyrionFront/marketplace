@@ -2,11 +2,12 @@ go 1.21.0
 
 use (
 	.
+	./calculations
 	./common
 	./config
 	./controllers
 	./models
-	./calculations
 	./repositories
 	./services
+	./utils
 )

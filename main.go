@@ -23,6 +23,7 @@ func main() {
 
 	configName := getConfigFileName()
 	config := config.InitConfig(configName)
+
 	log.Println("Initializing DB")
 	dbHandler := server.InitDatabase(config)
 
