@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"services"
 	"strconv"
+	"utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +27,11 @@ func NewStatsController(statsService *services.StatsService, usersService *servi
 }
 
 func (sc StatsController) SaveStats(ctx *gin.Context) {
-	accessToken := ctx.Request.Header.Get("Token")
+	accessToken, extrErr := utils.ExtractToken(ctx)
+	if extrErr != nil {
+		ctx.JSON(extrErr.Status, extrErr)
+		return
+	}
 	expectedRoles := []string{common.ROLE_ADMIN, common.ROLE_USER}
 
 	userId, isAuth, _, authErr := sc.usersService.AuthorizeUser(accessToken, expectedRoles)
@@ -85,7 +90,11 @@ func (sc StatsController) SaveStats(ctx *gin.Context) {
 }
 
 func (sc StatsController) PrepareStatsByUser(ctx *gin.Context) {
-	accessToken := ctx.Request.Header.Get("Token")
+	accessToken, extrErr := utils.ExtractToken(ctx)
+	if extrErr != nil {
+		ctx.JSON(extrErr.Status, extrErr)
+		return
+	}
 	expectedRoles := []string{common.ROLE_ADMIN, common.ROLE_USER}
 
 	tokenUserId, isAuth, role, authErr := sc.usersService.AuthorizeUser(accessToken, expectedRoles)
@@ -113,7 +122,7 @@ func (sc StatsController) PrepareStatsByUser(ctx *gin.Context) {
 		return
 	}
 
-	res, resError := sc.statsService.GetStatsByUser(userId)
+	res, resError := sc.statsService.GetAllStatsByUser(userId)
 	if resError != nil {
 		ctx.AbortWithStatusJSON(resError.Status, resError)
 		return

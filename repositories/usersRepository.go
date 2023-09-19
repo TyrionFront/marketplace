@@ -33,16 +33,16 @@ func (ur UsersRepository) AddUser(name, password, role string) *models.ResponseE
 	return nil
 }
 
-func (ur UsersRepository) LoginUser(name, password string) (int, *models.ResponseError) {
+func (ur UsersRepository) LoginUser(name, password string) (int, string, *models.ResponseError) {
 	query := `
-		SELECT id
+		SELECT id, user_role
 		FROM users
 		WHERE username = $1 AND user_password = crypt($2, user_password)
 	`
 
 	rows, err := ur.dbHandler.Query(query, name, password)
 	if err != nil {
-		return 0, &models.ResponseError{
+		return 0, "", &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
@@ -50,29 +50,30 @@ func (ur UsersRepository) LoginUser(name, password string) (int, *models.Respons
 	defer rows.Close()
 
 	var id int
+	var userRole string
 	for rows.Next() {
-		err := rows.Scan(&id)
+		err := rows.Scan(&id, &userRole)
 		if err != nil {
-			return 0, &models.ResponseError{
+			return 0, "", &models.ResponseError{
 				Message: err.Error(),
 				Status:  http.StatusInternalServerError,
 			}
 		}
 	}
 
-	if rows.Err() != nil {
-		return 0, &models.ResponseError{
+	if err = rows.Err(); err != nil {
+		return 0, "", &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
 	}
 
-	return id, nil
+	return id, userRole, nil
 }
 
 func (ur UsersRepository) GetUser(accessToken string) (int, string, *models.ResponseError) {
 	query := `
-		SELECT id, user_role, token_expires_at
+		SELECT id, user_role
 		FROM users
 		WHERE access_token = $1
 	`
@@ -97,7 +98,7 @@ func (ur UsersRepository) GetUser(accessToken string) (int, string, *models.Resp
 			}
 		}
 	}
-	if rows.Err() != nil {
+	if err = rows.Err(); err != nil {
 		return 0, "", &models.ResponseError{
 			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
@@ -134,12 +135,11 @@ func (ur UsersRepository) GetUser(accessToken string) (int, string, *models.Resp
 func (ur UsersRepository) SetAccessToken(accessToken string, id int) *models.ResponseError {
 	query := `
 		UPDATE users
-		SET access_token = $1, token_expires_at = $2
-		WHERE id = $3
+		SET access_token = $1
+		WHERE id = $2
 	`
-	currentTimeStamp := time.Now().Add(15 * time.Minute).Format(time.RFC3339)
 
-	_, err := ur.dbHandler.Exec(query, accessToken, currentTimeStamp, id)
+	_, err := ur.dbHandler.Exec(query, accessToken, id)
 	if err != nil {
 		return &models.ResponseError{
 			Message: err.Error(),

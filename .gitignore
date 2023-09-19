@@ -1,4 +1,6 @@
 /output
 /storage
+/keys
 .env
 *.toml
+contabo*

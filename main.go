@@ -2,7 +2,6 @@ package main
 
 import (
 	"config"
-	"fmt"
 	"log"
 	"marketplace/server"
 	"os"
@@ -23,8 +22,8 @@ func main() {
 	log.Println("Initializing configuration")
 
 	configName := getConfigFileName()
-	fmt.Println(configName)
 	config := config.InitConfig(configName)
+
 	log.Println("Initializing DB")
 	dbHandler := server.InitDatabase(config)
 

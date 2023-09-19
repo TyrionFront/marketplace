@@ -1,13 +1,11 @@
 package services
 
 import (
-	"encoding/base64"
-	"fmt"
 	"models"
 	"net/http"
 	"repositories"
-
-	"golang.org/x/crypto/bcrypt"
+	"strconv"
+	"utils"
 )
 
 type NewUserParams struct {
@@ -27,18 +25,18 @@ func NewUsersService(usersRepository *repositories.UsersRepository) *UsersServic
 	}
 }
 
-func generateAccessToken(name string, id int) (string, *models.ResponseError) {
-	baseStr := fmt.Sprintf("%v-%d", name, id)
-	hash, err := bcrypt.GenerateFromPassword([]byte(baseStr), bcrypt.DefaultCost)
-	if err != nil {
-		return "", &models.ResponseError{
-			Message: err.Error(),
-			Status:  http.StatusInternalServerError,
-		}
-	}
+// func generateAccessToken(name string, id int) (string, *models.ResponseError) {
+// 	baseStr := fmt.Sprintf("%v-%d", name, id)
+// 	hash, err := bcrypt.GenerateFromPassword([]byte(baseStr), bcrypt.DefaultCost)
+// 	if err != nil {
+// 		return "", &models.ResponseError{
+// 			Message: err.Error(),
+// 			Status:  http.StatusInternalServerError,
+// 		}
+// 	}
 
-	return base64.StdEncoding.EncodeToString(hash), nil
-}
+// 	return base64.StdEncoding.EncodeToString(hash), nil
+// }
 
 func (us UsersService) AddUser(params NewUserParams) *models.ResponseError {
 	name := params.Name
@@ -87,7 +85,7 @@ func (us UsersService) Login(name, password string) (string, *models.ResponseErr
 			Status:  http.StatusBadRequest,
 		}
 	}
-	id, err := us.usersRepository.LoginUser(name, password)
+	id, role, err := us.usersRepository.LoginUser(name, password)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +95,7 @@ func (us UsersService) Login(name, password string) (string, *models.ResponseErr
 			Status:  http.StatusUnauthorized,
 		}
 	}
-	accessToken, err := generateAccessToken(name, id)
+	accessToken, err := utils.GenerateJWT(name, role, id) // generateAccessToken(name, id)
 	if err != nil {
 		return "", err
 	}
@@ -118,13 +116,16 @@ func (us UsersService) Logout(accessToken string) *models.ResponseError {
 }
 
 func (us UsersService) AuthorizeUser(accessToken string, expectedRoles []string) (int, bool, string, *models.ResponseError) {
-	if accessToken == "" {
-		return 0, false, "", &models.ResponseError{
-			Message: "Invalid access token",
-			Status:  http.StatusBadRequest,
-		}
+	tokenClaims, err := utils.VerifyJWT(accessToken)
+	if err != nil {
+		return 0, false, "", err
 	}
-	id, role, err := us.usersRepository.GetUser(accessToken)
+	userId, parsingErr := strconv.ParseInt(tokenClaims.StandardClaims.Subject, 0, 0)
+	if parsingErr != nil {
+		return 0, false, "", err
+	}
+	role := tokenClaims.Role
+
 	if err != nil {
 		return 0, false, "", err
 	}
@@ -136,9 +137,9 @@ func (us UsersService) AuthorizeUser(accessToken string, expectedRoles []string)
 	}
 	for _, expected := range expectedRoles {
 		if expected == role {
-			return id, true, role, nil
+			return int(userId), true, role, nil
 		}
 	}
 
-	return id, false, role, nil
+	return int(userId), false, role, nil
 }
