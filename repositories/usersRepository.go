@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"models"
 	"net/http"
-	"time"
 )
 
 type UsersRepository struct {
@@ -88,9 +87,9 @@ func (ur UsersRepository) GetUser(accessToken string) (int, string, *models.Resp
 	defer rows.Close()
 
 	var id int
-	var role, expiresAt string
+	var role string
 	for rows.Next() {
-		err := rows.Scan(&id, &role, &expiresAt)
+		err := rows.Scan(&id, &role)
 		if err != nil {
 			return 0, "", &models.ResponseError{
 				Message: err.Error(),
@@ -105,29 +104,12 @@ func (ur UsersRepository) GetUser(accessToken string) (int, string, *models.Resp
 		}
 	}
 
-	if id == 0 || expiresAt == "" {
+	if id == 0 {
 		return 0, "", &models.ResponseError{
 			Message: "Invalid access token",
 			Status:  http.StatusBadRequest,
 		}
 	}
-
-	parsedTimePassed, err := time.Parse(time.RFC3339, expiresAt)
-	if err != nil {
-		return 0, "", &models.ResponseError{
-			Message: err.Error(),
-			Status:  http.StatusInternalServerError,
-		}
-	}
-	unixTimePassed := parsedTimePassed.Unix()
-
-	if time.Now().Unix() > unixTimePassed {
-		return 0, "", &models.ResponseError{
-			Message: "Expired token. Please log in again",
-			Status:  http.StatusUnauthorized,
-		}
-	}
-	ur.SetAccessToken(accessToken, id)
 
 	return id, role, nil
 }
