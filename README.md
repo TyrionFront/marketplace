@@ -21,7 +21,7 @@ New user with any role except for `admin` may be added as is. For new admin - Be
 
 `POST /login` - log in via _Basic auth_ using previousy `username` and `password`
 
-`POST /logout` - self explanatory
+`POST /logout` - processes received _Bearer_ token to log out
 
 At the moment general approach is next.
 By `POST /points` service receives _points_ data that must be provided in an array of objects with the next structure:

@@ -105,13 +105,6 @@ func (us UsersService) Login(name, password string) (string, *models.ResponseErr
 }
 
 func (us UsersService) Logout(accessToken string) *models.ResponseError {
-	if accessToken == "" {
-		return &models.ResponseError{
-			Message: "Invalid access token",
-			Status:  http.StatusBadRequest,
-		}
-	}
-
 	return us.usersRepository.RemoveAccessToken(accessToken)
 }
 

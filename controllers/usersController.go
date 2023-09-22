@@ -76,7 +76,11 @@ func (uc UsersController) Login(ctx *gin.Context) {
 }
 
 func (uc UsersController) Logout(ctx *gin.Context) {
-	accessToken := ctx.Request.Header.Get("Token")
+	accessToken, extrErr := utils.ExtractToken(ctx)
+	if extrErr != nil {
+		ctx.JSON(extrErr.Status, extrErr)
+		return
+	}
 	err := uc.usersService.Logout(accessToken)
 
 	if err != nil {
