@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"common"
 	"encoding/json"
 	"io"
 	"log"
@@ -81,7 +82,22 @@ func (uc UsersController) Logout(ctx *gin.Context) {
 		ctx.JSON(extrErr.Status, extrErr)
 		return
 	}
-	err := uc.usersService.Logout(accessToken)
+	expectedRoles := []string{common.ROLE_ADMIN, common.ROLE_USER}
+
+	userId, isAuth, _, authErr := uc.usersService.AuthorizeUser(accessToken, expectedRoles)
+	if authErr != nil {
+		ctx.JSON(authErr.Status, authErr)
+		return
+	}
+	if !isAuth {
+		ctx.Status(http.StatusUnauthorized)
+		return
+	}
+	if userId == 0 {
+		ctx.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	err := uc.usersService.Logout(userId)
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(err.Status, err)

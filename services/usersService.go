@@ -104,8 +104,8 @@ func (us UsersService) Login(name, password string) (string, *models.ResponseErr
 	return accessToken, nil
 }
 
-func (us UsersService) Logout(accessToken string) *models.ResponseError {
-	return us.usersRepository.RemoveAccessToken(accessToken)
+func (us UsersService) Logout(userId int) *models.ResponseError {
+	return us.usersRepository.RemoveAccessToken(userId)
 }
 
 func (us UsersService) AuthorizeUser(accessToken string, expectedRoles []string) (int, bool, string, *models.ResponseError) {

@@ -150,13 +150,13 @@ func (ur UsersRepository) SetAccessToken(accessToken string, id int) *models.Res
 	return nil
 }
 
-func (ur UsersRepository) RemoveAccessToken(accessToken string) *models.ResponseError {
+func (ur UsersRepository) RemoveAccessToken(userId int) *models.ResponseError {
 	query := `
 		UPDATE users
 		SET access_token = ''
 		WHERE id = $1
 	`
-	_, err := ur.dbHandler.Exec(query, accessToken)
+	_, err := ur.dbHandler.Exec(query, userId)
 	if err != nil {
 		return &models.ResponseError{
 			Message: err.Error(),
