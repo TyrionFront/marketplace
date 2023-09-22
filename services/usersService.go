@@ -109,6 +109,11 @@ func (us UsersService) Logout(userId int) *models.ResponseError {
 }
 
 func (us UsersService) AuthorizeUser(accessToken string, expectedRoles []string) (int, bool, string, *models.ResponseError) {
+	_, _, err := us.usersRepository.GetUser(accessToken)
+	if err != nil {
+		return 0, false, "", err
+	}
+
 	tokenClaims, err := utils.VerifyJWT(accessToken)
 	if err != nil {
 		return 0, false, "", err
@@ -128,6 +133,7 @@ func (us UsersService) AuthorizeUser(accessToken string, expectedRoles []string)
 			Status:  http.StatusUnauthorized,
 		}
 	}
+
 	for _, expected := range expectedRoles {
 		if expected == role {
 			return int(userId), true, role, nil
