@@ -17,7 +17,11 @@ Available by the next base URL: http://194.163.167.58:8080
 ```
 
 All fields are required.
-New user with any role except for `admin` may be added as is. For new admin - Bearer token of an exsisting admin is required.
+At the moment 2 roles are supported:
+- `admin`;
+- `user`.
+
+New user with role `user` may be added as is. For new admin - Bearer token of an exsisting admin is required.
 
 `POST /login` - log in via _Basic auth_ using previousy `username` and `password`
 
